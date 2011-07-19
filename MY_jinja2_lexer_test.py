@@ -46,12 +46,23 @@ class TokenTests(unittest.TestCase):
      result.append(next(stream))
    self.assertEqual(tokens, result)
 class LexerTests(unittest.TestCase):
-  def testTokenize(self):
+  def test_tokenize_data(self):
     generator = Lexer.tokenize("hello, world")
     result = []
     for token in generator:
       result.append(token)
     expect = [Token(TOKEN_DATA, 'hello, world'), ]
+    self.assertEqual(expect, result)
+  def test_tokenize_var(self):
+    generator = Lexer.tokenize('{{greeting}}')
+    result = []
+    for token in generator:
+      result.append(token)
+    expect = [
+      Token('variable_begin', '{{'),
+      Token('name', 'greeting'),
+      Token('variable_end', '}}'),
+    ]
     self.assertEqual(expect, result)
 if __name__ == '__main__':
   test_support.run_unittest(TokenTests, LexerTests)

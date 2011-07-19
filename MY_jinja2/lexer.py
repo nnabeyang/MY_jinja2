@@ -1,4 +1,6 @@
 import operator
+TOKEN_VARIABLE_BEGIN = 'variable_begin'
+TOKEN_VARIABLE_END = 'variable_end'
 TOKEN_NAME = 'name'
 TOKEN_DATA = 'data'
 TOKEN_INITIAL = 'initial'
@@ -24,11 +26,50 @@ class TokenStream:
     return token
 import re
 class Lexer:
-  @classmethod
-  def tokenize(cls, source):
-    regex = re.compile('(.+)', re.M| re.S)
+  @staticmethod
+  def tokenize(source):
+    c = lambda x: re.compile(x, re.M| re.S)
+    e = re.escape
+    rules ={
+            'root': [
+              # variable directive
+	      (c(r'(.*?)(?:(?P<variable_begin>\s*{{))'),
+	       'variable_begin'),
+              #data
+	      (c(r'(.+)'), 'data')
+	      ],
+	    'variable_begin': [
+                (c(e('}}')), 'variable_end'),
+		(c(r'(\b[a-zA-Z_][a-zA-Z0-9_]*\b)'), 'name')
+	      ]
+	    }
+    stack = ['root']
+    statetokens = rules[stack[-1]]
+    pos = 0
     while 1:
-      m = regex.match(source)
-      yield Token(TOKEN_DATA, m.group())
-      if len(source) <= m.end():
-        break
+      for regex, token in statetokens:
+	m = regex.match(source, pos)
+        if m is None:
+	  continue
+	if token == 'data':
+          yield Token(token, m.group())
+	elif token == 'variable_begin':
+	  for key, value in m.groupdict().iteritems():
+	    if value is not None:
+	      yield Token(key, value)
+	      stack.append(key)
+	      break
+	  else:
+	    raise RuntimeError("%r : no match" % regex)
+	elif token == 'name':
+	  yield Token(token, m.group())
+	elif token == 'variable_end':
+	  yield Token(token, m.group())
+	else:
+	  raise RuntimeError('unknown token')
+	statetokens = rules[stack[-1]]
+	pos = m.end()
+	break
+      else:
+        if len(source) <= pos:
+          break

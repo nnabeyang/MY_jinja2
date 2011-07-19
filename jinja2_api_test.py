@@ -4,10 +4,17 @@ from test import test_support
 import MY_jinja2
 import jinja2
 class APITests(unittest.TestCase):  
-  def test_from_data(self):
+  def test_from_string_data(self):
     env = self.MODULE.Environment()
     tmpl = env.from_string('hello, world')
     self.assertEqual('hello, world', tmpl.render())
+  def test_from_string_var(self):
+    env = self.MODULE.Environment()
+    tmpl = env.from_string('{{greeting}}')
+    self.assertEqual('hello', tmpl.render(greeting='hello'))
+    self.assertEqual('hi', tmpl.render(greeting='hi'))
+
+
 class API_jinja2Tests(APITests):
   MODULE = jinja2
 class API_MY_jinja2Tests(APITests):

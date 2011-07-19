@@ -1,15 +1,22 @@
+from MY_jinja2.visitor import NodeVisitor
 import StringIO
-class CodeGenerator:
+class CodeGenerator(NodeVisitor):
   def __init__(self):
     self.is_first = True
     self.indent_level = 0
     self.stream = StringIO.StringIO()
+    self.identifiers = Identifiers()
   def get_code(self):
     return self.stream.getvalue()
   def indent(self):
     self.indent_level += 1
   def outdent(self):
     self.indent_level -= 1
+  def pull_locals(self, node):
+    visitor = IdentifierVisitor(self.identifiers)
+    visitor.visit(node)
+    for name in self.identifiers.declared:
+      self.stream.write("  l_%s = dic['%s']\n" % (name, name))
   def visit_TemplateData(self, node):
     self.stream.write(repr(unicode(node.data)))
   def visit_Output(self, node):
@@ -17,12 +24,29 @@ class CodeGenerator:
       self.stream.write('\n')
     self.stream.write('  ' *self.indent_level)
     self.stream.write('yield ')
-    self.visit_TemplateData(node.node)
+    self.visit(node.node)
     self.is_first = False
   def visit_Template(self, node):
     self.stream.write('def root(dic):\n')
     self.indent()
+    self.pull_locals(node)
     for child in node.body:
-      self.visit_Output(child)
+      self.visit(child)
     self.outdent()
-  visit = visit_Template
+  def visit_Name(self, node):
+    if not self.identifiers.is_declared(node.name):
+      self.identifiers.declared.add(node.name)
+    self.stream.write('l_' + node.name)
+class Identifiers:
+  def __init__(self):
+    self.declared = set()
+  def is_declared(self, name):
+    if name in self.declared:
+      return True
+    return False
+class IdentifierVisitor(NodeVisitor):
+  def __init__(self, identifiers):
+    self.identifiers = identifiers
+  def visit_Name(self, node):
+    if not self.identifiers.is_declared(node.name):
+      self.identifiers.declared.add(node.name)

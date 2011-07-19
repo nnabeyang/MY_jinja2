@@ -13,7 +13,7 @@ from MY_jinja2 import lexer, parser, compiler
 class Environment:
   @classmethod
   def from_string(cls, source):
-    tokens = lexer.Lexer.tokenize('hello, world')
+    tokens = lexer.Lexer.tokenize(source)
     stream = lexer.TokenStream(tokens)
     node = parser.Parser.parse(stream)
     generator = compiler.CodeGenerator()

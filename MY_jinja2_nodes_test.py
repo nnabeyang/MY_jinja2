@@ -2,19 +2,22 @@
 import unittest
 from test import test_support
 from MY_jinja2 import nodes, compiler
-
+import MY_jinja2
 class NodeTests(unittest.TestCase):
   def setUp(self):
     self.generator = compiler.CodeGenerator()
     self.data = '<html><body>hello, world<body></html>'
- 
   def test_TemplateDataNode(self):
     node = nodes.TemplateData(self.data)
+    self.assertEqual("TemplateData(data='%s')" % self.data, repr(node))
+    self.assertEqual(node, nodes.TemplateData(self.data))
     self.generator.visit_TemplateData(node)
     self.assertEqual("u'%s'" % self.data, self.generator.get_code())
   def test_OutputNode(self):
     node = nodes.Output(nodes.TemplateData(self.data))
     self.generator.visit_Output(node)
+    self.assertEqual("Output(node=TemplateData(data='%s'))" % self.data, repr(node))
+    self.assertEqual(node, nodes.Output(nodes.TemplateData(self.data)))
     self.assertEqual("yield u'%s'" % self.data, self.generator.get_code())
   def test_TemplateNode_from_one_node(self):
     node = nodes.Template([nodes.Output(nodes.TemplateData(self.data))])
@@ -23,7 +26,7 @@ class NodeTests(unittest.TestCase):
 def root(dic):
   yield u'%s'\
 """ % self.data
-    , self.generator.get_code())    
+    , self.generator.get_code())
   def test_TemplateNode_from_multi_nodes(self):
     data = ('<html>',
              '<head><title>hello, world</title></head>',
@@ -43,7 +46,46 @@ def root(dic):
   yield u'%s'
   yield u'%s'\
 """ % data
+    self.assertEqual(expect, self.generator.get_code())
+  def test_Node_iter_fields(self):
+    node = nodes.Name('var', 'load')
+    expect =[
+      ('name', 'var'),
+      ('ctxt', 'load')
+    ]
+    result = []
+    for it in node.iter_fields():
+      result.append(it)
+    self.assertEqual(expect, result)
+  def test_OutputNode_iter_child_nodes(self):
+    name = nodes.Name('var', 'load')
+    node = nodes.Output(name)
+    result = []
+    for it in node.iter_child_nodes():
+      result.append(it)
+    self.assertEqual([name], result)
+  def test_Template_iter_child_nodes(self):
+    node1 = nodes.Output(nodes.Name('var1', 'load'))
+    node2 = nodes.Output(nodes.Name('var2', 'load'))
+    node = nodes.Template([node1, node2])
+    result = []
+    for it in node.iter_child_nodes():
+      result.append(it)
+    self.assertEquals([node1, node2], result)
+  def test_visit_Name(self):
+    self.assertFalse(self.generator.identifiers.is_declared('greeting'))
+    _nodes = []
+    _nodes.append(nodes.Output(nodes.Name('greeting', 'load')))
+    self.generator.visit(nodes.Template(_nodes))
+    self.assertTrue(self.generator.identifiers.is_declared('greeting'))
+    expect = """\
+def root(dic):
+  l_greeting = dic['greeting']
+  yield l_greeting\
+"""
     self.assertEqual(expect, self.generator.get_code())    
-    
+    tmpl = MY_jinja2.Template.from_code(expect)
+    self.assertEqual('hello', tmpl.render(greeting='hello'))
+
 if __name__ == '__main__':
   test_support.run_unittest(NodeTests)
