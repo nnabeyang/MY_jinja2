@@ -33,8 +33,8 @@ class Lexer:
     rules ={
             'root': [
               # variable directive
-	      (c(r'(.*?)(?:(?P<variable_begin>\s*{{))'),
-	       'variable_begin'),
+	      (c(r'(.*?)(?:(?P<variable_begin>{{))'),
+	       ('data', 'variable_begin')),
               #data
 	      (c(r'(.+)'), 'data')
 	      ],
@@ -47,26 +47,32 @@ class Lexer:
     statetokens = rules[stack[-1]]
     pos = 0
     while 1:
-      for regex, token in statetokens:
+      for regex, tokens in statetokens:
 	m = regex.match(source, pos)
         if m is None:
 	  continue
-	if token == 'data':
-          yield Token(token, m.group())
-	elif token == 'variable_begin':
-	  for key, value in m.groupdict().iteritems():
-	    if value is not None:
-	      yield Token(key, value)
-	      stack.append(key)
-	      break
-	  else:
-	    raise RuntimeError("%r : no match" % regex)
-	elif token == 'name':
-	  yield Token(token, m.group())
-	elif token == 'variable_end':
-	  yield Token(token, m.group())
+	if isinstance(tokens, tuple):
+          for idx, token in enumerate(tokens):
+	    data = m.group(idx +1)
+	    if data == '':
+	      continue
+	    if token == 'data':
+	      yield Token(token, data)
+	    elif token == 'variable_begin':
+	      for key, value in m.groupdict().iteritems():
+	        if value is not None:
+		  yield Token(key, value)
+	          stack.append(key)
+	          break
+	      else:
+	        raise RuntimeError('no match')
 	else:
-	  raise RuntimeError('unknown token')
+	  if tokens in ('data', 'name', 'variable_end'):
+            yield Token(tokens, m.group())
+	    if tokens == 'variable_end':
+	      stack.pop()
+	  else:
+	    raise RuntimeError('unknown token')
 	statetokens = rules[stack[-1]]
 	pos = m.end()
 	break

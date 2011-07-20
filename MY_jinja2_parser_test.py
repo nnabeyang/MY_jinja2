@@ -24,5 +24,22 @@ class ParserTests(unittest.TestCase):
       ]
     node = Parser.parse(TokenStream(tokens))
     self.assertEqual(nodes.Template([nodes.Output(nodes.Name('world', 'load')),]), node)
+  def test_parser_var_data_parse(self):
+    tokens = [
+      Token(TOKEN_DATA, 'hello, '),
+      Token(TOKEN_VARIABLE_BEGIN, '{{'),
+      Token(TOKEN_NAME, 'world'),
+      Token(TOKEN_VARIABLE_END, '}}'),
+      Token(TOKEN_DATA, '!!'),
+      ]
+    node = Parser.parse(TokenStream(tokens))
+    print node
+    self.assertEqual(
+      nodes.Template([
+        nodes.Output(nodes.TemplateData('hello, ')),
+        nodes.Output(nodes.Name('world', 'load')),
+        nodes.Output(nodes.TemplateData('!!')),
+	]),
+	node)
 if __name__ == '__main__':
   test_support.run_unittest(ParserTests)

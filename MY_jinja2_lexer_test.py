@@ -64,5 +64,19 @@ class LexerTests(unittest.TestCase):
       Token('variable_end', '}}'),
     ]
     self.assertEqual(expect, result)
+  def test_tokenize_var_and_data(self):
+    generator = Lexer.tokenize('hello, {{greeting}}!!')
+    result = []
+    for token in generator:
+      result.append(token)
+    expect = [
+      Token('data', 'hello, '),
+      Token('variable_begin', '{{'),
+      Token('name', 'greeting'),
+      Token('variable_end', '}}'),
+      Token('data', '!!'),
+    ]
+    self.assertEqual(expect, result)
+
 if __name__ == '__main__':
   test_support.run_unittest(TokenTests, LexerTests)

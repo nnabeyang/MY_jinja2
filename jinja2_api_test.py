@@ -13,6 +13,12 @@ class APITests(unittest.TestCase):
     tmpl = env.from_string('{{greeting}}')
     self.assertEqual('hello', tmpl.render(greeting='hello'))
     self.assertEqual('hi', tmpl.render(greeting='hi'))
+  def test_from_string_var_data(self):
+    env = self.MODULE.Environment()
+    tmpl = env.from_string('hello, {{someone}}!!')
+    self.assertEqual('hello, world!!', tmpl.render(someone='world'))
+    self.assertEqual('hello, nabeyang!!', tmpl.render(someone='nabeyang'))
+
 
 
 class API_jinja2Tests(APITests):

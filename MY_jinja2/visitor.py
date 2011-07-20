@@ -6,5 +6,3 @@ class NodeVisitor:
       pass
     for child in node.iter_child_nodes():
       self.visit(child)
-
-
