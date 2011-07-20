@@ -33,7 +33,6 @@ class ParserTests(unittest.TestCase):
       Token(TOKEN_DATA, '!!'),
       ]
     node = Parser.parse(TokenStream(tokens))
-    print node
     self.assertEqual(
       nodes.Template([
         nodes.Output(nodes.TemplateData('hello, ')),
@@ -41,5 +40,31 @@ class ParserTests(unittest.TestCase):
         nodes.Output(nodes.TemplateData('!!')),
 	]),
 	node)
+  def test_parser_for_statement(self):
+    tokens = [
+      Token('block_begin', u'{%'),
+      Token('name', 'for'),
+      Token('name', 'item'),
+      Token('name', 'in'),
+      Token('name', 'seq'),
+      Token('block_end', u'%}'),
+      Token('variable_begin', u'{{'),
+      Token('name', 'item'),
+      Token('variable_end', u'}}'),
+      Token('block_begin', u'{%'),
+      Token('name', 'endfor'),
+      Token('block_end', u'%}')
+    ]
+    node = Parser.parse(TokenStream(tokens))
+    #print node
+    expect = nodes.Template([
+             nodes.For(
+               nodes.Name('item', 'store'),
+	       nodes.Name('seq', 'load'),
+	       nodes.Output(nodes.Name('item', 'load'))
+	     )
+	   ])
+    self.assertEqual(expect, node)
+
 if __name__ == '__main__':
   test_support.run_unittest(ParserTests)

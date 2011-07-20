@@ -15,7 +15,7 @@ class CodeGenerator(NodeVisitor):
   def pull_locals(self, node):
     visitor = IdentifierVisitor(self.identifiers)
     visitor.visit(node)
-    for name in self.identifiers.declared:
+    for name in self.identifiers.undeclared:
       self.stream.write("  l_%s = dic['%s']\n" % (name, name))
   def visit_TemplateData(self, node):
     self.stream.write(repr(unicode(node.data)))
@@ -34,12 +34,26 @@ class CodeGenerator(NodeVisitor):
       self.visit(child)
     self.outdent()
   def visit_Name(self, node):
-    if not self.identifiers.is_declared(node.name):
+    if node.ctxt == 'load' and not self.identifiers.is_declared(node.name):
       self.identifiers.declared.add(node.name)
     self.stream.write('l_' + node.name)
+  def visit_For(self, node):
+    if not self.is_first:
+      self.stream.write('\n')
+    self.stream.write('  ' *self.indent_level)
+    self.stream.write('for ')
+    self.visit(node.target)
+    self.stream.write(' in ')
+    self.visit(node.iter)
+    self.stream.write(':')
+    self.is_first = False
+    self.indent()
+    self.visit(node.body)
+    self.outdent()
 class Identifiers:
   def __init__(self):
     self.declared = set()
+    self.undeclared = set()
   def is_declared(self, name):
     if name in self.declared:
       return True
@@ -48,5 +62,7 @@ class IdentifierVisitor(NodeVisitor):
   def __init__(self, identifiers):
     self.identifiers = identifiers
   def visit_Name(self, node):
-    if not self.identifiers.is_declared(node.name):
+    if node.ctxt == 'load' and not self.identifiers.is_declared(node.name):
+      self.identifiers.undeclared.add(node.name)
+    elif node.ctxt == 'store':
       self.identifiers.declared.add(node.name)

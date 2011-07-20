@@ -77,6 +77,27 @@ class LexerTests(unittest.TestCase):
       Token('data', '!!'),
     ]
     self.assertEqual(expect, result)
+  def test_tokenize_for_statement(self):
+    generator = Lexer.tokenize('{% for item in seq %}{{item}}{% endfor %}')
+    result = []
+    for token in generator:
+      result.append(token)
+    expect = [
+      Token('block_begin', u'{%'),
+      Token('name', 'for'),
+      Token('name', 'item'),
+      Token('name', 'in'),
+      Token('name', 'seq'),
+      Token('block_end', u'%}'),
+      Token('variable_begin', u'{{'),
+      Token('name', 'item'),
+      Token('variable_end', u'}}'),
+      Token('block_begin', u'{%'),
+      Token('name', 'endfor'),
+      Token('block_end', u'%}')
+    ]
+    self.assertEqual(expect, result)
+
 
 if __name__ == '__main__':
   test_support.run_unittest(TokenTests, LexerTests)

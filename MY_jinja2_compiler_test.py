@@ -34,12 +34,12 @@ class CompilerTests(unittest.TestCase):
     
     visitor = compiler.IdentifierVisitor(identifiers)
     visitor.visit(nodes.Template([
-      nodes.Output(nodes.Name('var1', 'load')),
+      nodes.Output(nodes.Name('var1', 'store')),
       nodes.Name('var2', 'load')
       ]))
 
     self.assertTrue(identifiers.is_declared('var1'))
-    self.assertTrue(identifiers.is_declared('var2'))
+    self.assertFalse(identifiers.is_declared('var2'))
  
 if __name__ == '__main__':
   test_support.run_unittest(CompilerTests)

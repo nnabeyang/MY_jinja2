@@ -38,3 +38,5 @@ class Output(Node):
   fields = ('node',)
 class Name(Node):
   fields = ('name', 'ctxt')
+class For(Node):
+  fields = ('target', 'iter', 'body')

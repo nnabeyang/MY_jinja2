@@ -86,6 +86,23 @@ def root(dic):
     self.assertEqual(expect, self.generator.get_code())    
     tmpl = MY_jinja2.Template.from_code(expect)
     self.assertEqual('hello', tmpl.render(greeting='hello'))
-
+  def test_visit_For(self):
+    node = nodes.Template([
+             nodes.For(
+	       nodes.Name('item', 'store'),
+	       nodes.Name('seq', 'load'),
+	       nodes.Output(nodes.Name('item', 'load'))
+	    )
+	  ])
+    self.generator.visit(node)
+    code = self.generator.get_code()
+    self.assertEqual("""\
+def root(dic):
+  l_seq = dic['seq']
+  for l_item in l_seq:
+    yield l_item\
+""", code)
+    tpl = MY_jinja2.Template.from_code(code)
+    self.assertEqual('one, two, three', tpl.render(seq=['one, ', 'two, ', 'three']))
 if __name__ == '__main__':
   test_support.run_unittest(NodeTests)

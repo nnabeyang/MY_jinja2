@@ -28,19 +28,37 @@ import re
 class Lexer:
   @staticmethod
   def tokenize(source):
+    g = Lexer.tokeniter(source)
+    for type, value in g:
+      if type == 'whitespace':
+        continue
+      else:
+        yield Token(type, value)
+  @staticmethod
+  def tokeniter(source):
     c = lambda x: re.compile(x, re.M| re.S)
     e = re.escape
+    root_tag_rules = [('variable', '{{'),
+                      ('block', '{%')
+		   ]
     rules ={
             'root': [
               # variable directive
-	      (c(r'(.*?)(?:(?P<variable_begin>{{))'),
+	      (c(r'(.*?)(?:(?P<variable_begin>{{)|(?P<block_begin>{%))'),
 	       ('data', 'variable_begin')),
               #data
 	      (c(r'(.+)'), 'data')
 	      ],
+	    # variable
 	    'variable_begin': [
                 (c(e('}}')), 'variable_end'),
 		(c(r'(\b[a-zA-Z_][a-zA-Z0-9_]*\b)'), 'name')
+	      ],
+	    # block
+	    'block_begin': [
+                (c(e('%}')), 'block_end'),
+	        (c(r'(\b[a-zA-Z_][a-zA-Z0-9_]*\b)'), 'name'),
+	        (re.compile(r'\s+', re.U), 'whitespace')
 	      ]
 	    }
     stack = ['root']
@@ -57,25 +75,27 @@ class Lexer:
 	    if data == '':
 	      continue
 	    if token == 'data':
-	      yield Token(token, data)
+	      yield token, data
 	    elif token == 'variable_begin':
 	      for key, value in m.groupdict().iteritems():
 	        if value is not None:
-		  yield Token(key, value)
+		  yield key, value
 	          stack.append(key)
 	          break
 	      else:
 	        raise RuntimeError('no match')
 	else:
-	  if tokens in ('data', 'name', 'variable_end'):
-            yield Token(tokens, m.group())
-	    if tokens == 'variable_end':
+	  if tokens in ('data', 'name', 'variable_end', 'block_end', 'whitespace'):
+            yield tokens, m.group()
+	    if tokens in ('variable_end', 'block_end'):
 	      stack.pop()
 	  else:
-	    raise RuntimeError('unknown token')
+	    raise RuntimeError('%r is unknown token' % tokens)
+
 	statetokens = rules[stack[-1]]
 	pos = m.end()
 	break
       else:
         if len(source) <= pos:
           break
+	raise RuntimeError('unexpected char %s' % source[pos])
