@@ -9,6 +9,7 @@ class TokenTests(unittest.TestCase):
     token = Token(TOKEN_DATA, data)
     self.assertEqual(TOKEN_DATA, token.type)
     self.assertEqual(data, token.value)
+    self.assertEqual("Token('data', u'%s')" % data, repr(token))
   def test_Tokens(self):
     token1 = Token(TOKEN_DATA, 'hello')
     token2 = Token(TOKEN_NAME, 'world')
@@ -97,7 +98,30 @@ class LexerTests(unittest.TestCase):
       Token('block_end', u'%}')
     ]
     self.assertEqual(expect, result)
-
-
+  def test_tokenize_for_statement_with_data(self):
+    expect = [Token('block_begin', u'{%'),
+              Token('name', 'for'),
+	      Token('name', 'lang'),
+	      Token('name', 'in'),
+	      Token('name', 'langs'),
+	      Token('block_end', u'%}'),
+	      Token('data', u'hello, '),
+	      Token('variable_begin', u'{{'),
+	      Token('name', 'lang'),
+	      Token('variable_end', u'}}'),
+	      Token('data', u'\n'),
+	      Token('block_begin', u'{%'),
+	      Token('name', 'endfor'),
+	      Token('block_end', u'%}')
+	      ]
+    source = """\
+{% for lang in langs %}hello, {{lang}}
+{% endfor %}\
+"""
+    generator = Lexer.tokenize(source)
+    result = []
+    for token in generator:
+      result.append(token)
+    self.assertEqual(expect, result)
 if __name__ == '__main__':
   test_support.run_unittest(TokenTests, LexerTests)

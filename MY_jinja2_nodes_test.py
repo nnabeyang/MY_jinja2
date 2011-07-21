@@ -104,5 +104,26 @@ def root(dic):
 """, code)
     tpl = MY_jinja2.Template.from_code(code)
     self.assertEqual('one, two, three', tpl.render(seq=['one, ', 'two, ', 'three']))
+  def test_visit_For_with_data(self):
+    node = nodes.Template([
+             nodes.For(
+               nodes.Name('lang', 'store'),
+	       nodes.Name('langs', 'load'),
+	       [
+	         nodes.Output(nodes.TemplateData(u'hello, ')),
+	         nodes.Output(nodes.Name('lang', 'load')),
+		 nodes.Output(nodes.TemplateData(u'\n'))
+	       ]
+	      )
+	   ])
+    self.generator.visit(node)
+    code = self.generator.get_code()
+    tpl = MY_jinja2.Template.from_code(code)
+    self.assertEquals("""\
+hello, Python
+hello, Ruby
+hello, Perl
+""", tpl.render(langs=['Python', 'Ruby', 'Perl']))
+
 if __name__ == '__main__':
   test_support.run_unittest(NodeTests)

@@ -55,16 +55,71 @@ class ParserTests(unittest.TestCase):
       Token('name', 'endfor'),
       Token('block_end', u'%}')
     ]
-    node = Parser.parse(TokenStream(tokens))
-    #print node
-    expect = nodes.Template([
-             nodes.For(
+    stream = TokenStream(tokens)
+    next(stream)
+    node = Parser.parse_for(stream)
+    self.assertEqual('block_end', stream.current.type)
+    expect = nodes.For(
                nodes.Name('item', 'store'),
 	       nodes.Name('seq', 'load'),
-	       nodes.Output(nodes.Name('item', 'load'))
+	       [nodes.Output(nodes.Name('item', 'load'))]
 	     )
-	   ])
     self.assertEqual(expect, node)
-
+  def test_parser_for_statement_with_data(self):
+    tokens = [Token('block_begin', u'{%'),
+              Token('name', 'for'),
+	      Token('name', 'lang'),
+	      Token('name', 'in'),
+	      Token('name', 'langs'),
+	      Token('block_end', u'%}'),
+	      Token('data', u'hello, '),
+	      Token('variable_begin', u'{{'),
+	      Token('name', 'lang'),
+	      Token('variable_end', u'}}'),
+	      Token('data', u'\n'),
+	      Token('block_begin', u'{%'),
+	      Token('name', 'endfor'),
+	      Token('block_end', u'%}')
+	      ]
+    stream = TokenStream(tokens)
+    next(stream)
+    node = Parser.parse_for(stream)
+    self.assertEqual('block_end', stream.current.type)
+    expect = nodes.For(
+               nodes.Name('lang', 'store'),
+	       nodes.Name('langs', 'load'),
+	       [nodes.Output(nodes.TemplateData(u'hello, ')),
+	        nodes.Output(nodes.Name('lang', 'load')),
+		nodes.Output(nodes.TemplateData(u'\n'))
+               ]
+	     )
+    self.assertEqual(expect, node)
+  def test_parser_parse_for_statement_with_data(self):
+    tokens = [Token('block_begin', u'{%'),
+              Token('name', 'for'),
+	      Token('name', 'lang'),
+	      Token('name', 'in'),
+	      Token('name', 'langs'),
+	      Token('block_end', u'%}'),
+	      Token('data', u'hello, '),
+	      Token('variable_begin', u'{{'),
+	      Token('name', 'lang'),
+	      Token('variable_end', u'}}'),
+	      Token('data', u'\n'),
+	      Token('block_begin', u'{%'),
+	      Token('name', 'endfor'),
+	      Token('block_end', u'%}')
+	      ]
+    stream = TokenStream(tokens)
+    node = Parser.parse(stream)
+    expect = nodes.Template([nodes.For(
+               nodes.Name('lang', 'store'),
+	       nodes.Name('langs', 'load'),
+	       [nodes.Output(nodes.TemplateData(u'hello, ')),
+	        nodes.Output(nodes.Name('lang', 'load')),
+		nodes.Output(nodes.TemplateData(u'\n'))
+               ]
+	     )])
+    self.assertEqual(expect, node)
 if __name__ == '__main__':
   test_support.run_unittest(ParserTests)

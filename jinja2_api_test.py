@@ -22,6 +22,18 @@ class FromStringTests(unittest.TestCase):
     env = self.MODULE.Environment()
     tmpl = env.from_string('{% for item in seq %}{{item}}{% endfor %}')
     self.assertEqual('one, two, three', tmpl.render(seq=['one, ', 'two, ', 'three']))
+  def test_for_statement_with_data(self):
+    env = self.MODULE.Environment()
+    data = """\
+{% for lang in langs %}hello, {{lang}}
+{% endfor %}\
+"""
+    tmpl = env.from_string(data)
+    self.assertEqual("""\
+hello, Python
+hello, Ruby
+hello, Perl
+""", tmpl.render(langs=['Python', 'Ruby', 'Perl']))
 
 class FromString_jinja2Tests(FromStringTests):
   MODULE = jinja2

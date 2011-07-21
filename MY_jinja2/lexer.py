@@ -9,6 +9,9 @@ class Token(tuple):
   type, value = (property(operator.itemgetter(x)) for x in range(2))
   def __new__(cls, type, value):
     return tuple.__new__(cls, (type, value))
+  def __repr__(self):
+    return '%s(%r, %r)' %(self.__class__.__name__,
+                      self.type, self.value)
 class TokenStream:
   def __init__(self, iter_tokens):
     self._next = iter(iter_tokens).next

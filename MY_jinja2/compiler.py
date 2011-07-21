@@ -48,7 +48,11 @@ class CodeGenerator(NodeVisitor):
     self.stream.write(':')
     self.is_first = False
     self.indent()
-    self.visit(node.body)
+    if isinstance(node.body, list):
+      for stmt in node.body:
+        self.visit(stmt)
+    else:
+      self.visit(node.body)
     self.outdent()
 class Identifiers:
   def __init__(self):
