@@ -47,5 +47,9 @@ class Name(Node):
   fields = ('name', 'ctxt')
 class For(Node):
   fields = ('target', 'iter', 'body')
+class If(Node):
+  fields = ('test', 'body')
 class Block(Node):
   fields = ('name', 'body')
+class Const(Node):
+  fields = ('value',)

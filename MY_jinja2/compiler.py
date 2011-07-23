@@ -74,6 +74,21 @@ class CodeGenerator(NodeVisitor):
     else:
       self.visit(node.body, frame)
     self.outdent()
+  def visit_If(self, node, frame):
+    if not self.is_first:
+      self.stream.write('\n')
+    self.stream.write('  ' *self.indent_level)
+    self.stream.write('if ')
+    self.visit(node.test, frame)
+    self.stream.write(':')
+    self.is_first = False
+    self.indent()
+    if isinstance(node.body, list):
+      for stmt in node.body:
+        self.visit(stmt, frame)
+    else:
+      self.visit(node.body, frame)
+    self.outdent()
   def visit_Block(self, node, frame):
     if not self.is_first:
       self.stream.write('\n')
@@ -82,6 +97,11 @@ class CodeGenerator(NodeVisitor):
     self.stream.write('  ' *(self.indent_level+1))
     self.stream.write("yield event")
     self.is_first = False
+  def visit_Const(self, node, frame):
+    if isinstance(node.value, float):
+      self.stream.write(str(node.value))
+    else:
+      self.stream.write(repr(node.value))
 class Frame:
   def __init__(self):
     self.identifiers = Identifiers()

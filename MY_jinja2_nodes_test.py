@@ -3,6 +3,7 @@ import unittest
 from test import test_support
 from MY_jinja2 import nodes, compiler, Template
 import MY_jinja2
+import cStringIO
 class NodeTests(unittest.TestCase):
   def setUp(self):
     self.generator = compiler.CodeGenerator()
@@ -144,6 +145,32 @@ hello, Perl
     self.generator.visit(node, compiler.Frame())
     code = self.generator.get_code()
     #print code
+    tpl = Template.from_code(code)
+    self.assertEqual('...', tpl.render())
+  def test_const(self):
+    self.generator.visit(nodes.Const(True), compiler.Frame())
+    self.assertEqual('True', self.generator.get_code())
+
+    del self.generator.stream
+    self.generator.stream = cStringIO.StringIO()
+    self.generator.visit(nodes.Const(1234567890), compiler.Frame())
+    self.assertEqual('1234567890', self.generator.get_code())
+
+    del self.generator.stream
+    self.generator.stream = cStringIO.StringIO()
+    self.generator.visit(nodes.Const(3.14), compiler.Frame())
+    self.assertEqual('3.14', self.generator.get_code())
+
+  def test_if_simple(self):
+    node =nodes.Template([
+      nodes.If(
+        nodes.Const(True),
+	[nodes.Output(
+	  [nodes.TemplateData(u'...')])
+	]
+      )])
+    self.generator.visit(node, compiler.Frame())
+    code = self.generator.get_code()
     tpl = Template.from_code(code)
     self.assertEqual('...', tpl.render())
 
