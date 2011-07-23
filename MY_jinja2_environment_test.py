@@ -5,11 +5,12 @@ import MY_jinja2
 class TemplateTests(unittest.TestCase):
   def test_template_from_code(self):
     code = """\
-#from MY_jinja2.runtime import to_string
-def root(dic):
-    l_seq = dic['seq']
+#from MY_jinja2.runtime import Context
+def root(context):
+    l_seq = context.resolve('seq')
     for l_item in l_seq:
         yield unicode(l_item)
+blocks = {}
 """
     tmpl = MY_jinja2.Template.from_code(code)
     self.assertEqual("0123456789", tmpl.render(seq = range(10)))

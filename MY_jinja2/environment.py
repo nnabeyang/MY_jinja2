@@ -1,3 +1,4 @@
+from MY_jinja2.runtime import Context
 class Template(object):
   @classmethod
   def from_code(cls, code):
@@ -5,10 +6,12 @@ class Template(object):
     namespace = {}
     exec code in namespace
     tpl.render_func = namespace['root']
+    tpl.blocks = namespace['blocks']
     return tpl
   def render(self, *args, **kwargs):
     dic = dict(*args, **kwargs)
-    return ''.join(self.render_func(dic))
+    context = Context(self.blocks, dic)
+    return ''.join(self.render_func(context))
 from MY_jinja2 import lexer, parser, compiler
 class Environment:
   @classmethod

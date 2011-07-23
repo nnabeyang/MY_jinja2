@@ -16,7 +16,7 @@ class CodeGenerator(NodeVisitor):
     visitor = IdentifierVisitor(self.identifiers)
     visitor.visit(node)
     for name in self.identifiers.undeclared:
-      self.stream.write("  l_%s = dic['%s']\n" % (name, name))
+      self.stream.write("  l_%s = context.resolve('%s')\n" % (name, name))
   def visit_TemplateData(self, node):
     self.stream.write(repr(unicode(node.data)))
   def visit_Output(self, node):
@@ -27,12 +27,18 @@ class CodeGenerator(NodeVisitor):
     self.visit(node.node)
     self.is_first = False
   def visit_Template(self, node):
-    self.stream.write('def root(dic):\n')
+    self.stream.write('from MY_jinja2.runtime import Context\n')
+    self.stream.write('def root(context):\n')
     self.indent()
     self.pull_locals(node)
     for child in node.body:
       self.visit(child)
     self.outdent()
+
+    if not self.is_first:
+      self.stream.write('\n')
+    self.stream.write('  ' *self.indent_level)
+    self.stream.write('blocks = {}')
   def visit_Name(self, node):
     if node.ctxt == 'load' and not self.identifiers.is_declared(node.name):
       self.identifiers.declared.add(node.name)

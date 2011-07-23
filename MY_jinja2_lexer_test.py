@@ -123,5 +123,26 @@ class LexerTests(unittest.TestCase):
     for token in generator:
       result.append(token)
     self.assertEqual(expect, result)
+  def test_tokenize_if_statement(self):
+    source = "{% if someone %}hello, {{someone}} {% endif %}"
+    generator = Lexer.tokenize(source)
+    expect = [Token('block_begin', u'{%'),
+              Token('name', 'if'),
+	      Token('name', 'someone'),
+	      Token('block_end', u'%}'),
+	      Token('data', u'hello, '),
+	      Token('variable_begin', u'{{'),
+	      Token('name', 'someone'),
+	      Token('variable_end', u'}}'),
+	      Token('data', u' '),
+	      Token('block_begin', u'{%'),
+	      Token('name', 'endif'),
+	      Token('block_end', u'%}')
+	     ]
+    result = []
+    for token in generator:
+      result.append(token)
+    #print result
+    self.assertEquals(expect, result)
 if __name__ == '__main__':
   test_support.run_unittest(TokenTests, LexerTests)

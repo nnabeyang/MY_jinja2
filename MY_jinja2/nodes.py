@@ -30,6 +30,13 @@ class Node(object):
       elif isinstance(item, list):
         for item_elem in item:
 	  yield item_elem
+  def find_all(self, node_type):
+    for node in self.iter_child_nodes():
+      if(isinstance(node, node_type)):
+        yield node
+      for n in node.find_all(node_type):
+        yield n
+
 class Template(Node):
   fields = ('body',)
 class TemplateData(Node):
@@ -40,3 +47,5 @@ class Name(Node):
   fields = ('name', 'ctxt')
 class For(Node):
   fields = ('target', 'iter', 'body')
+class Block(Node):
+  fields = ('name', 'body')
