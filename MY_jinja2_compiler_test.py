@@ -40,5 +40,6 @@ class CompilerTests(unittest.TestCase):
 
     self.assertTrue(identifiers.is_declared('var1'))
     self.assertFalse(identifiers.is_declared('var2'))
+
 if __name__ == '__main__':
   test_support.run_unittest(CompilerTests)

@@ -2,10 +2,11 @@
 import unittest
 from test import test_support
 import MY_jinja2
+from MY_jinja2 import compiler
 class TemplateTests(unittest.TestCase):
   def test_template_from_code(self):
     code = """\
-#from MY_jinja2.runtime import Context
+from MY_jinja2.runtime import Context
 def root(context):
     l_seq = context.resolve('seq')
     for l_item in l_seq:
@@ -19,7 +20,7 @@ blocks = {}
     nodes = MY_jinja2.nodes
     node = nodes.Template([nodes.Output(nodes.TemplateData(data))])
     generator = MY_jinja2.CodeGenerator()
-    generator.visit_Template(node)
+    generator.visit_Template(node, compiler.Frame())
     tmpl = MY_jinja2.Template.from_code(generator.get_code())
     self.assertEqual(data, tmpl.render())
   def test_template_from_node(self):
@@ -35,7 +36,7 @@ blocks = {}
       _nodes.append(nodes.Output(nodes.TemplateData(i)))
     node = nodes.Template(_nodes)
     generator = MY_jinja2.CodeGenerator()
-    generator.visit_Template(node)
+    generator.visit_Template(node, compiler.Frame())
     tmpl = MY_jinja2.Template.from_code(generator.get_code())
     self.assertEqual(''.join(data), tmpl.render())
   def test_template_from_tokens(self):
@@ -47,7 +48,7 @@ blocks = {}
     stream = MY_jinja2.lexer.TokenStream(tokens)
     node = MY_jinja2.parser.Parser.parse(stream)
     generator = MY_jinja2.CodeGenerator()
-    generator.visit_Template(node)
+    generator.visit_Template(node, compiler.Frame())
     tmpl = MY_jinja2.Template.from_code(generator.get_code())
     self.assertEqual('hello, world', tmpl.render())
   def test_template_from_string(self):
@@ -55,7 +56,7 @@ blocks = {}
     stream = MY_jinja2.lexer.TokenStream(tokens)
     node = MY_jinja2.parser.Parser.parse(stream)
     generator = MY_jinja2.CodeGenerator()
-    generator.visit_Template(node)
+    generator.visit_Template(node, compiler.Frame())
     tmpl = MY_jinja2.Template.from_code(generator.get_code())
     self.assertEqual('hello, world', tmpl.render())
 class EnvironmentTests(unittest.TestCase):

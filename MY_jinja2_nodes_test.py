@@ -11,17 +11,17 @@ class NodeTests(unittest.TestCase):
     node = nodes.TemplateData(self.data)
     self.assertEqual("TemplateData(data='%s')" % self.data, repr(node))
     self.assertEqual(node, nodes.TemplateData(self.data))
-    self.generator.visit_TemplateData(node)
+    self.generator.visit_TemplateData(node, compiler.Frame())
     self.assertEqual("u'%s'" % self.data, self.generator.get_code())
   def test_OutputNode(self):
     node = nodes.Output(nodes.TemplateData(self.data))
-    self.generator.visit_Output(node)
+    self.generator.visit_Output(node, compiler.Frame())
     self.assertEqual("Output(node=TemplateData(data='%s'))" % self.data, repr(node))
     self.assertEqual(node, nodes.Output(nodes.TemplateData(self.data)))
     self.assertEqual("yield u'%s'" % self.data, self.generator.get_code())
   def test_TemplateNode_from_one_node(self):
     node = nodes.Template([nodes.Output(nodes.TemplateData(self.data))])
-    self.generator.visit_Template(node)
+    self.generator.visit_Template(node, compiler.Frame())
     code = self.generator.get_code()
     tpl = Template.from_code(code)
     self.assertEqual(self.data, tpl.render())
@@ -36,7 +36,7 @@ class NodeTests(unittest.TestCase):
     _nodes.append(nodes.Output(nodes.TemplateData(data[1])))
     _nodes.append(nodes.Output(nodes.TemplateData(data[2])))
     _nodes.append(nodes.Output(nodes.TemplateData(data[3])))
-    self.generator.visit_Template(nodes.Template(_nodes))
+    self.generator.visit_Template(nodes.Template(_nodes), compiler.Frame())
     code = self.generator.get_code()
     #print code
     tpl = Template.from_code(code)
@@ -67,11 +67,12 @@ class NodeTests(unittest.TestCase):
       result.append(it)
     self.assertEquals([node1, node2], result)
   def test_visit_Name(self):
-    self.assertFalse(self.generator.identifiers.is_declared('greeting'))
+    frame = compiler.Frame()
+    self.assertFalse(frame.identifiers.is_declared('greeting'))
     _nodes = []
     _nodes.append(nodes.Output(nodes.Name('greeting', 'load')))
-    self.generator.visit(nodes.Template(_nodes))
-    self.assertTrue(self.generator.identifiers.is_declared('greeting'))
+    self.generator.visit(nodes.Template(_nodes), frame)
+    self.assertTrue(frame.identifiers.is_declared('greeting'))
     code = self.generator.get_code()
     #print code
     tpl = Template.from_code(code)
@@ -84,7 +85,7 @@ class NodeTests(unittest.TestCase):
 	       nodes.Output(nodes.Name('item', 'load'))
 	    )
 	  ])
-    self.generator.visit(node)
+    self.generator.visit(node, compiler.Frame())
     code = self.generator.get_code()
     #print code
     tpl = Template.from_code(code)
@@ -101,8 +102,9 @@ class NodeTests(unittest.TestCase):
 	       ]
 	      )
 	   ])
-    self.generator.visit(node)
+    self.generator.visit(node, compiler.Frame())
     code = self.generator.get_code()
+    #print code
     tpl = MY_jinja2.Template.from_code(code)
     self.assertEquals("""\
 hello, Python
@@ -129,6 +131,21 @@ hello, Perl
       expect.append(nodes.Block('%d' % i, [nodes.Output([nodes.TemplateData(u'...')])]))
     expect.append(nodes.Block('foo', [nodes.Output([nodes.TemplateData(u'...')])]))
     self.assertEqual(expect,  list(node.find_all(nodes.Block)))
+
+  def test_block(self):
+    node = nodes.Template([
+              nodes.Block(
+	        #name
+	        'foo',
+		#body
+	        [nodes.Output([nodes.TemplateData(u'...')])]
+	      )
+            ])
+    self.generator.visit(node, compiler.Frame())
+    code = self.generator.get_code()
+    #print code
+    tpl = Template.from_code(code)
+    self.assertEqual('...', tpl.render())
 
 if __name__ == '__main__':
   test_support.run_unittest(NodeTests)

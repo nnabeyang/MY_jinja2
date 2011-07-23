@@ -20,6 +20,7 @@ class Environment:
     stream = lexer.TokenStream(tokens)
     node = parser.Parser.parse(stream)
     generator = compiler.CodeGenerator()
-    generator.visit(node)
+    frame = compiler.Frame()
+    generator.visit(node, frame)
     return Template.from_code(generator.get_code())
 
