@@ -23,14 +23,18 @@ class CodeGenerator(NodeVisitor):
     if not self.is_first:
       self.stream.write('\n')
     self.stream.write('  ' *self.indent_level)
-    self.stream.write('yield ')
-    self.visit(node.node, frame)
+    self.stream.write('yield to_string(')
+    if isinstance(node.node, list):
+      self.visit(node.node[0], frame)
+    else:
+      self.visit(node.node, frame)
+    self.stream.write(')')
     self.is_first = False
   def visit_Template(self, node, frame):
     blocks = {}
     for block in node.find_all(nodes.Block):
       blocks[block.name] = block
-    self.stream.write('from MY_jinja2.runtime import Context\n')
+    self.stream.write('from MY_jinja2.runtime import Context, to_string\n')
     self.stream.write('def root(context):\n')
     self.pull_locals(node, frame)
     self.indent()

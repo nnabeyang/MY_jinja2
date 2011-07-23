@@ -5,3 +5,4 @@ class Context:
   def resolve(self, key):
     if key in self.vars:
       return self.vars[key]
+to_string = unicode
