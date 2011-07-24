@@ -53,3 +53,5 @@ class Block(Node):
   fields = ('name', 'body')
 class Const(Node):
   fields = ('value',)
+class Assign(Node):
+  fields = ('target', 'node')

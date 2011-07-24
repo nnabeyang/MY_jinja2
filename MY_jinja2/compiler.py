@@ -106,6 +106,14 @@ class CodeGenerator(NodeVisitor):
       self.stream.write(str(node.value))
     else:
       self.stream.write(repr(node.value))
+  def visit_Assign(self, node, frame):
+    if not self.is_first:
+      self.stream.write('\n')
+    self.stream.write('  ' *self.indent_level)
+    self.visit(node.target, frame)
+    self.stream.write(" = ")
+    self.visit(node.node, frame)
+    self.is_first = False
 class Frame:
   def __init__(self):
     self.identifiers = Identifiers()
@@ -125,3 +133,7 @@ class IdentifierVisitor(NodeVisitor):
       self.identifiers.undeclared.add(node.name)
     elif node.ctxt == 'store':
       self.identifiers.declared.add(node.name)
+  def visit_Assgin(self, node):
+    self.visit(node.target)
+    self.visit(node.node)
+    print node.node.name

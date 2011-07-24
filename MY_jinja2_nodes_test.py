@@ -19,7 +19,7 @@ class NodeTests(unittest.TestCase):
     self.generator.visit_Output(node, compiler.Frame())
     self.assertEqual("Output(node=TemplateData(data='%s'))" % self.data, repr(node))
     self.assertEqual(node, nodes.Output(nodes.TemplateData(self.data)))
-    self.assertEqual("yield u'%s'" % self.data, self.generator.get_code())
+    self.assertEqual("yield to_string(u'%s')" % self.data, self.generator.get_code())
   def test_TemplateNode_from_one_node(self):
     node = nodes.Template([nodes.Output(nodes.TemplateData(self.data))])
     self.generator.visit_Template(node, compiler.Frame())
@@ -171,8 +171,40 @@ hello, Perl
       )])
     self.generator.visit(node, compiler.Frame())
     code = self.generator.get_code()
+    #print code
     tpl = Template.from_code(code)
     self.assertEqual('...', tpl.render())
+  def test_forloop_in_if(self):
+    node = nodes.Template([
+      nodes.If(
+        nodes.Name('render', 'load'),
+        [nodes.For(nodes.Name('cell', 'store'),
+         nodes.Name('row', 'load'),
+         [nodes.Output([
+           nodes.Name('cell', 'load')
+         ])],
+      )],
+    )])
+    self.generator.visit(node, compiler.Frame())
+    code = self.generator.get_code()
+    #print code
+    tpl = Template.from_code(code)
+    self.assertEqual('0123456789', tpl.render({'render':True, 'row': range(10)}))
+    self.assertEqual('', tpl.render({'render':False, 'row': range(10)}))
+  def test_set_simple(self):
+    node = nodes.Template(
+                       [nodes.Assign(
+		         nodes.Name('foo', 'store'),
+			 nodes.Const(1)),
+			 nodes.Output(
+			   [nodes.Name('foo', 'load')]
+			 )
+		       ]
+		     )
+    self.generator.visit(node, compiler.Frame())
+    code = self.generator.get_code()
+    tpl = Template.from_code(code)
+    self.assertEqual(u'1', tpl.render())
 
 if __name__ == '__main__':
   test_support.run_unittest(NodeTests)
