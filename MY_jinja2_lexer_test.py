@@ -144,5 +144,21 @@ class LexerTests(unittest.TestCase):
       result.append(token)
     #print result
     self.assertEquals(expect, result)
+  def test_if_simple(self):
+    source = '''{% if true %}...{% endif %}'''
+    expect = [
+      Token('block_begin', u'{%'),
+      Token('name', 'if'),
+      Token('name', 'true'),
+      Token('block_end', u'%}'),
+      Token('data', u'...'),
+      Token('block_begin', u'{%'),
+      Token('name', 'endif'),
+      Token('block_end', u'%}')
+    ]
+    result = []
+    for token in Lexer.tokenize(source):
+      result.append(token)
+    self.assertEqual(expect, result)
 if __name__ == '__main__':
   test_support.run_unittest(TokenTests, LexerTests)

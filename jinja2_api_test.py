@@ -34,6 +34,15 @@ hello, Python
 hello, Ruby
 hello, Perl
 """, tmpl.render(langs=['Python', 'Ruby', 'Perl']))
+  def test_if_simple(self):
+    env = self.MODULE.Environment()
+    source = '''{% if true %}...{% endif %}'''
+    tmpl = env.from_string(source)
+    self.assertEqual(u'...', tmpl.render())
+    source = '''{% if false %}...{% endif %}'''
+    tmpl = env.from_string(source)
+    self.assertEqual(u'', tmpl.render())
+
 
 class FromString_jinja2Tests(FromStringTests):
   MODULE = jinja2

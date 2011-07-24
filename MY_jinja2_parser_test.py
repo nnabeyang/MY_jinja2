@@ -57,7 +57,8 @@ class ParserTests(unittest.TestCase):
     ]
     stream = TokenStream(tokens)
     next(stream)
-    node = Parser.parse_for(stream)
+    next(stream)
+    node = Parser().parse_for(stream)
     self.assertEqual('block_end', stream.current.type)
     expect = nodes.For(
                nodes.Name('item', 'store'),
@@ -83,7 +84,9 @@ class ParserTests(unittest.TestCase):
 	      ]
     stream = TokenStream(tokens)
     next(stream)
-    node = Parser.parse_for(stream)
+    next(stream)
+    parser = Parser()
+    node = parser.parse_for(stream)
     self.assertEqual('block_end', stream.current.type)
     expect = nodes.For(
                nodes.Name('lang', 'store'),
@@ -120,6 +123,27 @@ class ParserTests(unittest.TestCase):
 		nodes.Output(nodes.TemplateData(u'\n'))
                ]
 	     )])
+    self.assertEqual(expect, node)
+  def test_if_simple(self):
+    tokens = [
+      Token('block_begin', u'{%'),
+      Token('name', 'if'),
+      Token('name', 'true'),
+      Token('block_end', u'%}'),
+      Token('data', u'...'),
+      Token('block_begin', u'{%'),
+      Token('name', 'endif'),
+      Token('block_end', u'%}')
+    ]
+    stream = TokenStream(tokens)
+    node = Parser.parse(stream)
+    expect =nodes.Template([
+      nodes.If(
+        nodes.Const(True),
+	[nodes.Output(
+	  nodes.TemplateData(u'...'))
+	],
+      )])
     self.assertEqual(expect, node)
 if __name__ == '__main__':
   test_support.run_unittest(ParserTests)
