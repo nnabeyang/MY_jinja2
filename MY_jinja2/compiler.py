@@ -17,19 +17,37 @@ class CodeGenerator(NodeVisitor):
     visitor.visit(node)
     for name in frame.identifiers.undeclared:
       self.stream.write("  l_%s = context.resolve('%s')\n" % (name, name))
-  def visit_TemplateData(self, node, frame):
-    self.stream.write(repr(unicode(node.data)))
-  def visit_Output(self, node, frame):
+  def write(self, x):
     if not self.is_first:
       self.stream.write('\n')
     self.stream.write('  ' *self.indent_level)
-    self.stream.write('yield to_string(')
-    if isinstance(node.node, list):
-      self.visit(node.node[0], frame)
+    self.stream.write(x)
+  def visit_TemplateData(self, node, frame):
+    self.stream.write(repr(unicode(node.data)))
+  def visit_Output(self, node, frame):
+    if isinstance(node.nodes, list):
+      arguments = []
+      format = []
+      self.write('yield ')
+      for child in node.nodes:
+        try:
+          format.append(child.as_const())
+	except nodes.Impossible:
+	  format.append('%s')
+	  arguments.append(child)
+
+      self.stream.write(repr(u''.join(format)) + ' % (')
+      for argument in arguments:
+        self.stream.write('to_string(')
+	self.visit(argument, frame)
+	self.stream.write('), ')
+      self.stream.write(')')
+      self.is_first = False
     else:
-      self.visit(node.node, frame)
-    self.stream.write(')')
-    self.is_first = False
+        self.write('yield to_string(')
+        self.visit(node.nodes, frame)
+        self.stream.write(')')
+        self.is_first = False
   def visit_Template(self, node, frame):
     blocks = {}
     for block in node.find_all(nodes.Block):
@@ -42,30 +60,21 @@ class CodeGenerator(NodeVisitor):
       self.visit(child, frame)
     self.outdent()
     for name, block in blocks.iteritems():
-      if not self.is_first:
-        self.stream.write('\n')
-      self.stream.write('  ' *self.indent_level)
-      self.stream.write('def block_%s(context):' % name)
+      self.write('def block_%s(context):' % name)
       self.indent()
       block_frame = Frame()
       self.pull_locals(block, block_frame)
       for child in block.body:
         self.visit(child, block_frame)
       self.outdent()
-    if not self.is_first:
-      self.stream.write('\n')
-    self.stream.write('  ' *self.indent_level)
-    self.stream.write("blocks = {%s}" % ''.join(
+    self.write("blocks = {%s}" % ''.join(
       "'%s': block_%s" % (x, x) for x in blocks))
   def visit_Name(self, node, frame):
     if node.ctxt == 'load' and not frame.identifiers.is_declared(node.name):
       frame.identifiers.declared.add(node.name)
     self.stream.write('l_' + node.name)
   def visit_For(self, node, frame):
-    if not self.is_first:
-      self.stream.write('\n')
-    self.stream.write('  ' *self.indent_level)
-    self.stream.write('for ')
+    self.write('for ')
     self.visit(node.target, frame)
     self.stream.write(' in ')
     self.visit(node.iter, frame)
@@ -79,10 +88,7 @@ class CodeGenerator(NodeVisitor):
       self.visit(node.body, frame)
     self.outdent()
   def visit_If(self, node, frame):
-    if not self.is_first:
-      self.stream.write('\n')
-    self.stream.write('  ' *self.indent_level)
-    self.stream.write('if ')
+    self.write('if ')
     self.visit(node.test, frame)
     self.stream.write(':')
     self.is_first = False
@@ -94,10 +100,7 @@ class CodeGenerator(NodeVisitor):
       self.visit(node.body, frame)
     self.outdent()
   def visit_Block(self, node, frame):
-    if not self.is_first:
-      self.stream.write('\n')
-    self.stream.write('  ' *self.indent_level)
-    self.stream.write("for event in context.blocks['%s'][0](context):\n" % node.name)
+    self.write("for event in context.blocks['%s'][0](context):\n" % node.name)
     self.stream.write('  ' *(self.indent_level+1))
     self.stream.write("yield event")
     self.is_first = False

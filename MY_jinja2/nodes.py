@@ -1,4 +1,6 @@
 import itertools
+class Impossible(Exception):
+  pass
 class NodeType(type):
   def __new__(cls, name, bases, d):
     assert(len(bases) == 1)
@@ -36,13 +38,16 @@ class Node(object):
         yield node
       for n in node.find_all(node_type):
         yield n
-
+  def as_const(self):
+    raise Impossible(repr(self))
 class Template(Node):
   fields = ('body',)
 class TemplateData(Node):
   fields = ('data',)
+  def as_const(self):
+    return self.data
 class Output(Node):
-  fields = ('node',)
+  fields = ('nodes',)
 class Name(Node):
   fields = ('name', 'ctxt')
 class For(Node):
@@ -53,5 +58,7 @@ class Block(Node):
   fields = ('name', 'body')
 class Const(Node):
   fields = ('value',)
+  def as_const(self):
+    return self.value
 class Assign(Node):
   fields = ('target', 'node')

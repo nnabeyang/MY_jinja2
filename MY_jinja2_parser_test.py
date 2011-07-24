@@ -13,9 +13,11 @@ class ParserTests(unittest.TestCase):
     node = Parser.parse(TokenStream(tokens))
     self.assertEqual(
     nodes.Template([
-      nodes.Output(nodes.TemplateData('hello, ')),
-      nodes.Output(nodes.TemplateData('world'))
-      ]), node)
+      nodes.Output([
+        nodes.TemplateData('hello, '),
+        nodes.TemplateData('world')
+      ])]),
+    node)
   def test_parser_var_parse(self):
     tokens = [
       Token(TOKEN_VARIABLE_BEGIN, ''),
@@ -23,7 +25,7 @@ class ParserTests(unittest.TestCase):
       Token(TOKEN_VARIABLE_END, ''),
       ]
     node = Parser.parse(TokenStream(tokens))
-    self.assertEqual(nodes.Template([nodes.Output(nodes.Name('world', 'load')),]), node)
+    self.assertEqual(nodes.Template([nodes.Output([nodes.Name('world', 'load')]),]), node)
   def test_parser_var_data_parse(self):
     tokens = [
       Token(TOKEN_DATA, 'hello, '),
@@ -35,11 +37,13 @@ class ParserTests(unittest.TestCase):
     node = Parser.parse(TokenStream(tokens))
     self.assertEqual(
       nodes.Template([
-        nodes.Output(nodes.TemplateData('hello, ')),
-        nodes.Output(nodes.Name('world', 'load')),
-        nodes.Output(nodes.TemplateData('!!')),
-	]),
-	node)
+        nodes.Output([
+	  nodes.TemplateData('hello, '),
+          nodes.Name('world', 'load'),
+          nodes.TemplateData('!!')
+	])
+      ]),
+      node)
   def test_parser_for_statement(self):
     tokens = [
       Token('block_begin', u'{%'),
@@ -63,7 +67,7 @@ class ParserTests(unittest.TestCase):
     expect = nodes.For(
                nodes.Name('item', 'store'),
 	       nodes.Name('seq', 'load'),
-	       [nodes.Output(nodes.Name('item', 'load'))]
+	       [nodes.Output([nodes.Name('item', 'load')])]
 	     )
     self.assertEqual(expect, node)
   def test_parser_for_statement_with_data(self):
@@ -91,9 +95,11 @@ class ParserTests(unittest.TestCase):
     expect = nodes.For(
                nodes.Name('lang', 'store'),
 	       nodes.Name('langs', 'load'),
-	       [nodes.Output(nodes.TemplateData(u'hello, ')),
-	        nodes.Output(nodes.Name('lang', 'load')),
-		nodes.Output(nodes.TemplateData(u'\n'))
+	       [ nodes.Output([
+	         nodes.TemplateData(u'hello, '),
+	         nodes.Name('lang', 'load'),
+		 nodes.TemplateData(u'\n')
+	         ])
                ]
 	     )
     self.assertEqual(expect, node)
@@ -118,9 +124,11 @@ class ParserTests(unittest.TestCase):
     expect = nodes.Template([nodes.For(
                nodes.Name('lang', 'store'),
 	       nodes.Name('langs', 'load'),
-	       [nodes.Output(nodes.TemplateData(u'hello, ')),
-	        nodes.Output(nodes.Name('lang', 'load')),
-		nodes.Output(nodes.TemplateData(u'\n'))
+	       [ nodes.Output([
+	           nodes.TemplateData(u'hello, '),
+	           nodes.Name('lang', 'load'),
+		   nodes.TemplateData(u'\n')
+		 ])
                ]
 	     )])
     self.assertEqual(expect, node)
@@ -140,8 +148,9 @@ class ParserTests(unittest.TestCase):
     expect =nodes.Template([
       nodes.If(
         nodes.Const(True),
-	[nodes.Output(
-	  nodes.TemplateData(u'...'))
+	[nodes.Output([
+	  nodes.TemplateData(u'...')
+	  ])
 	],
       )])
     self.assertEqual(expect, node)

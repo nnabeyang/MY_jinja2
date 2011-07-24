@@ -17,9 +17,21 @@ class NodeTests(unittest.TestCase):
   def test_OutputNode(self):
     node = nodes.Output(nodes.TemplateData(self.data))
     self.generator.visit_Output(node, compiler.Frame())
-    self.assertEqual("Output(node=TemplateData(data='%s'))" % self.data, repr(node))
+    self.assertEqual("Output(nodes=TemplateData(data='%s'))" % self.data, repr(node))
     self.assertEqual(node, nodes.Output(nodes.TemplateData(self.data)))
     self.assertEqual("yield to_string(u'%s')" % self.data, self.generator.get_code())
+  def test_OutputNode_list(self):
+    node = nodes.Template([nodes.Output([
+        nodes.Name('date', 'load'),
+	nodes.TemplateData(u': '),
+	nodes.Name('message', 'load')
+      ])
+     ])
+    self.generator.visit(node, compiler.Frame())
+    code = self.generator.get_code()
+    #print code
+    tpl = Template.from_code(code)
+    self.assertEqual(u'2011-07-25: hello', tpl.render(date='2011-07-25', message='hello'))
   def test_TemplateNode_from_one_node(self):
     node = nodes.Template([nodes.Output(nodes.TemplateData(self.data))])
     self.generator.visit_Template(node, compiler.Frame())

@@ -43,7 +43,6 @@ hello, Perl
     tmpl = env.from_string(source)
     self.assertEqual(u'', tmpl.render())
 
-
 class FromString_jinja2Tests(FromStringTests):
   MODULE = jinja2
 class FromString_MY_jinja2Tests(FromStringTests):

@@ -5,7 +5,6 @@ class Parser:
     name = next(stream).value
     return getattr(self, 'parse_' + name)(stream)
   def parse_for(self, stream):
- #   assert('for' == stream.current.value)
     target = nodes.Name(next(stream).value, 'store')
     assert('in' == next(stream).value)
     iter = nodes.Name(next(stream).value, 'load')
@@ -19,27 +18,31 @@ class Parser:
     return nodes.If(test, body)
   def subparse(self, stream, end_token=None):
     body = []
+    data_buffer = []
+    def flush_data():
+      if data_buffer:
+        body.append(nodes.Output(data_buffer[:]))
+        del data_buffer[:]
     while stream:
       token = next(stream)
       if 'data' == token.type:
         data = nodes.TemplateData(token.value)
-        body.append(nodes.Output(data))
+        data_buffer.append(data)
       elif 'variable_begin' == token.type:
         token = next(stream)
 	assert(TOKEN_NAME == token.type)
-	body.append(nodes.Output(nodes.Name(token.value, 'load')))
+	data_buffer.append(nodes.Name(token.value, 'load'))
 	assert(TOKEN_VARIABLE_END == next(stream).type)
       elif 'block_begin' == token.type:
+	flush_data()
 	if end_token is not None and end_token == next(stream).value:
 	  return body
-	#next(stream)
 	body.append(self.parse_statement(stream))
         assert('block_end', stream.current.type)
         next(stream)
       else:
         raise Exception(stream.current)
-      if end_token is not None and end_token == stream.current.type:
-        return body
+    flush_data()
     return body
   @staticmethod
   def parse(stream):
