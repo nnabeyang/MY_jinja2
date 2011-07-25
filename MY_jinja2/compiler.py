@@ -117,6 +117,11 @@ class CodeGenerator(NodeVisitor):
     self.stream.write(" = ")
     self.visit(node.node, frame)
     self.is_first = False
+  def visit_Getattr(self, node, frame):
+    self.stream.write('getattr(')
+    self.visit(node.node, frame)
+    self.stream.write(', %r)' % node.attr)
+    pass
 class Frame:
   def __init__(self):
     self.identifiers = Identifiers()

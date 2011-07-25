@@ -217,6 +217,40 @@ hello, Perl
     code = self.generator.get_code()
     tpl = Template.from_code(code)
     self.assertEqual(u'1', tpl.render())
+  def test_getattr(self):
+    class Article:
+      def __init__(self, text, url):
+        self.text = text
+	self.url = url
+    articles = []
+    articles.append(Article('twitter','http://twitter.com'))
+    articles.append(Article('google','http://www.google.com'))
+    articles.append(Article('yahoo!','http://www.yahoo.com'))
+    node = nodes.Template(
+                       [nodes.For(
+		         nodes.Name('article', 'store'),
+			 nodes.Name('articles', 'load'),
+			 [nodes.Output([
+			   nodes.Getattr(
+			     nodes.Name('article', 'load'),
+			     'text',
+			     'load'
+			   ),
+			   nodes.TemplateData(u':'),
+			   nodes.Getattr(
+			     nodes.Name('article', 'load'),
+			     'url',
+			     'load'),
+			   nodes.TemplateData(u'\n'),
+			  ])],
+                       )])
+    self.generator.visit(node, compiler.Frame())
+    code = self.generator.get_code()
+    #print code
+    tpl = Template.from_code(code)
+    self.assertEqual('twitter:http://twitter.com\n'
+    'google:http://www.google.com\nyahoo!:http://www.yahoo.com\n',
+    tpl.render({'articles': articles}))
 
 if __name__ == '__main__':
   test_support.run_unittest(NodeTests)

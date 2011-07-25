@@ -62,3 +62,5 @@ class Const(Node):
     return self.value
 class Assign(Node):
   fields = ('target', 'node')
+class Getattr(Node):
+  fields = ('node', 'attr', 'ctxt')
