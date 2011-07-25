@@ -5,6 +5,9 @@ TOKEN_NAME = 'name'
 TOKEN_DATA = 'data'
 TOKEN_INITIAL = 'initial'
 TOKEN_EOF = 'eof'
+operators = {
+'.': 'dot'
+}
 class Token(tuple):
   type, value = (property(operator.itemgetter(x)) for x in range(2))
   def __new__(cls, type, value):
@@ -35,8 +38,9 @@ class Lexer:
     for type, value in g:
       if type == 'whitespace':
         continue
-      else:
-        yield Token(type, value)
+      elif type == 'operator':
+        type = operators[value]
+      yield Token(type, value)
   @staticmethod
   def tokeniter(source):
     c = lambda x: re.compile(x, re.M| re.S)
@@ -55,13 +59,14 @@ class Lexer:
 	    # variable
 	    'variable_begin': [
                 (c(e('}}')), 'variable_end'),
-		(c(r'(\b[a-zA-Z_][a-zA-Z0-9_]*\b)'), 'name')
+		(c(r'(\b[a-zA-Z_][a-zA-Z0-9_]*\b)'), 'name'),
+		(re.compile(r'(%s)' % e('.')), 'operator')
 	      ],
 	    # block
 	    'block_begin': [
                 (c(e('%}')), 'block_end'),
 	        (c(r'(\b[a-zA-Z_][a-zA-Z0-9_]*\b)'), 'name'),
-	        (re.compile(r'\s+', re.U), 'whitespace')
+	        (re.compile(r'\s+', re.U), 'whitespace'),
 	      ]
 	    }
     stack = ['root']
@@ -88,7 +93,7 @@ class Lexer:
 	      else:
 	        raise RuntimeError('no match')
 	else:
-	  if tokens in ('data', 'name', 'variable_end', 'block_end', 'whitespace'):
+	  if tokens in ('data', 'name', 'variable_end', 'block_end', 'whitespace', 'operator'):
             yield tokens, m.group()
 	    if tokens in ('variable_end', 'block_end'):
 	      stack.pop()

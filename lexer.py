@@ -160,5 +160,35 @@ class LexerTests(unittest.TestCase):
     for token in Lexer.tokenize(source):
       result.append(token)
     self.assertEqual(expect, result)
+  def test_dot(self):
+    source ='{% for article in articles %}{{article.text}}:{{article.url}}{% endfor %}'
+    expect = [
+      Token('block_begin', u'{%'),
+      Token('name', 'for'),
+      Token('name', 'article'),
+      Token('name', 'in'),
+      Token('name', 'articles'),
+      Token('block_end', u'%}'),
+      Token('variable_begin', u'{{'),
+      Token('name', 'article'),
+      Token('dot', u'.'),
+      Token('name', 'text'),
+      Token('variable_end', u'}}'),
+      Token('data', u':'),
+      Token('variable_begin', u'{{'),
+      Token('name', 'article'),
+      Token('dot', u'.'),
+      Token('name', 'url'),
+      Token('variable_end', u'}}'),
+      Token('block_begin', u'{%'),
+      Token('name', 'endfor'),
+      Token('block_end', u'%}')
+    ]
+    result = []
+    for token in Lexer.tokenize(source):
+      result.append(token)
+    #print repr(result).replace(', Token', ',\nToken')
+    self.assertEqual(expect, result)
+
 if __name__ == '__main__':
   test_support.run_unittest(TokenTests, LexerTests)

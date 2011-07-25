@@ -42,7 +42,16 @@ hello, Perl
     source = '''{% if false %}...{% endif %}'''
     tmpl = env.from_string(source)
     self.assertEqual(u'', tmpl.render())
-
+  def test_getattr(self):
+    env = self.MODULE.Environment()
+    class Message:
+      def __init__(self, date, text):
+        self.date = date
+	self.text = text
+    m = Message('2011-07-25', 'hello')
+    source = '{{message.date}}: {{message.text}}'
+    tpl = env.from_string(source)
+    self.assertEqual(u'2011-07-25: hello', tpl.render(message = m))
 class FromString_jinja2Tests(FromStringTests):
   MODULE = jinja2
 class FromString_MY_jinja2Tests(FromStringTests):

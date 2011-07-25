@@ -31,14 +31,25 @@ class Parser:
       elif 'variable_begin' == token.type:
         token = next(stream)
 	assert(TOKEN_NAME == token.type)
-	data_buffer.append(nodes.Name(token.value, 'load'))
-	assert(TOKEN_VARIABLE_END == next(stream).type)
+	node = nodes.Name(token.value, 'load')
+	token = next(stream)
+	if 'dot' == token.type:
+	  token = next(stream)
+	  assert(TOKEN_NAME == token.type)
+	  node = nodes.Getattr(
+	           node,
+	           token.value,
+                   'load'
+		 )
+	  token = next(stream)
+	data_buffer.append(node)
+	assert(TOKEN_VARIABLE_END == token.type)
       elif 'block_begin' == token.type:
 	flush_data()
 	if end_token is not None and end_token == next(stream).value:
 	  return body
 	body.append(self.parse_statement(stream))
-        assert('block_end', stream.current.type)
+        #assert('block_end', stream.current.type)
         next(stream)
       else:
         raise Exception(stream.current)

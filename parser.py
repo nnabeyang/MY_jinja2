@@ -154,5 +154,50 @@ class ParserTests(unittest.TestCase):
 	],
       )])
     self.assertEqual(expect, node)
+  def test_getattr(self):
+    tokens = [
+      Token('block_begin', u'{%'),
+      Token('name', 'for'),
+      Token('name', 'article'),
+      Token('name', 'in'),
+      Token('name', 'articles'),
+      Token('block_end', u'%}'),
+      Token('variable_begin', u'{{'),
+      Token('name', 'article'),
+      Token('dot', u'.'),
+      Token('name', 'text'),
+      Token('variable_end', u'}}'),
+      Token('data', u':'),
+      Token('variable_begin', u'{{'),
+      Token('name', 'article'),
+      Token('dot', u'.'),
+      Token('name', 'url'),
+      Token('variable_end', u'}}'),
+      Token('block_begin', u'{%'),
+      Token('name', 'endfor'),
+      Token('block_end', u'%}')
+    ]
+    stream = TokenStream(tokens)
+    node = Parser.parse(stream)
+    expect = nodes.Template(
+                       [nodes.For(
+		         nodes.Name('article', 'store'),
+			 nodes.Name('articles', 'load'),
+			 [nodes.Output([
+			   nodes.Getattr(
+			     nodes.Name('article', 'load'),
+			     'text',
+			     'load'
+			   ),
+			   nodes.TemplateData(u':'),
+			   nodes.Getattr(
+			     nodes.Name('article', 'load'),
+			     'url',
+			     'load'),
+			  ])],
+                       )])
+    #print node
+    self.assertEqual(expect, node)
+
 if __name__ == '__main__':
   test_support.run_unittest(ParserTests)
